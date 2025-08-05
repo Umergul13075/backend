@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema({
             ref: "Video"
         }
     ],
-    // we will use bcrypt npm package for securign the password
+    // we will use bcrypt npm package for securing the password
     password:{
         type: String,
         required: [true, "Password is required"]
@@ -97,16 +97,19 @@ userSchema.methods.isPasswordCorrect = async function (password){
 
 }
 
-// jwt tokens
+// jwt tokens (jason web tokens)
 userSchema.methods.generateAccessToken = function(){
     return jwt.sign(
+        // Payload
         {
             _id: this._id, // auto generated mongodb id
             email: this.email,
             username: this.usename,
             fullName: this.fullName
         },
+        // secretKey
         process.env.ACCESS_TOKEN_SECRET,
+        // expiry
         {
             expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
         }
