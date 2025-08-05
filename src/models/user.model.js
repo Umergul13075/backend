@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema({
             ref: "Video"
         }
     ],
-    // we will use bcrypt npm package
+    // we will use bcrypt npm package for securign the password
     password:{
         type: String,
         required: [true, "Password is required"]
@@ -56,28 +56,52 @@ const userSchema = new mongoose.Schema({
 )
 
 // in mein jeneral function use krna lazmi  arrow function nahi q k arrow function mein this ka access nahi hota tou issi lia q k upper userSchema mein koi data lia hai ussey save krna hai na tou uss k lia uss ka access bhi hona tou chahiya na tou woh hamein jeneral function mein milta hai
+
+// This is a Mongoose middleware — a special function that runs automatically before saving a user to the database.
 userSchema.pre("save", async function(next){
 
     if(!this.isModified("password")) return next();
     
-    this.password = bcrypt.hash(this.password, 12)
+    this.password = await bcrypt.hash(this.password, 12)
     next()
 
     // if(this.isModified("password")){
     //     this.password = bcrypt.hash(this.password, 10)
     //     next()
+
+    // Summary
+    //Runs before saving a user.
+
+    // Checks: "Is the password new or changed?"
+
+    // If yes → Hash it (encrypt it) using bcrypt.
+
+    // If not → Skip hashing.
+
+    // Then move on to save the data.
+
     // }    
 })
 // custom methods to check is password correct
 userSchema.methods.isPasswordCorrect = async function (password){
   return await bcrypt.compare(password, this.password)
+//   This function checks whether the password entered by the user (during login)
+//matches the encrypted (hashed) password saved in the database.
+
+// It returns:
+
+// true ✅ if the passwords match
+// false ❌ if they don’t
+
+
+
 }
 
 // jwt tokens
 userSchema.methods.generateAccessToken = function(){
     return jwt.sign(
         {
-            _id: this._id,
+            _id: this._id, // auto generated mongodb id
             email: this.email,
             username: this.usename,
             fullName: this.fullName
@@ -87,6 +111,18 @@ userSchema.methods.generateAccessToken = function(){
             expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
         }
     )
+
+
+//     jwt.sign({...}, secretKey, options)
+// 📌 This is how we create a token using the jsonwebtoken package.
+
+// It takes 3 things:
+
+// Payload → What you want to store in the token (e.g. _id, email) paylod mtlb data aur kutch nahi
+
+// Secret → A secret key that only your backend knows
+
+// Options → Like how long the token should be valid
 }
 userSchema.methods.generateRefreshToken = function(){
     return jwt.sign(

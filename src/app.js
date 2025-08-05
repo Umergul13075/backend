@@ -3,6 +3,7 @@ import cookieParser from "cookie-parser";
 import cors from 'cors';
 const app = express();
 // remember jb bhi app middleware use krty haan ya configurations krni ho tou most of the time app app.use() k through krty haan
+// kisi bhi origin ka url a rha hai anay do
 app.use(cors({
     origin: process.env.CORS_ORIGIN,
     credentials: true,

@@ -7,7 +7,6 @@ const asyncHandler = (requestHandler) => {
 }
 
 export {asyncHandler}
-
 // how you can understand the method below steps are written:
 // 1) const asyncHandler = () => {}
 // 2) const asyncHandler = (function) => () => {}
