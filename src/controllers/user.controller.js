@@ -9,9 +9,6 @@ const registerUser = asyncHandler( async (req, res) => {
     res.status(200).json({
         message: "Registered"
     })
-} )
-
-const login = asyncHandler(async(req, res)=>{
     // step ==>1
     // get user details from frontend if you have no frontend use Postman. you get data now question arise what data will you get? The data you will get through model you have created 
 
@@ -82,7 +79,7 @@ const login = asyncHandler(async(req, res)=>{
         throw new ApiError(409, "Username or emial already exists")
     }
 
-    // avatar, coverImage check
+    // avatar, coverImage check, multer provides us req.files method as well
     const avatarLocalPath = req.files?.avatar[0]?.path
     console.log(req.files);
     const coverImageLocalPath = req.files?.coverImage[0]?.path
@@ -120,6 +117,5 @@ const login = asyncHandler(async(req, res)=>{
         new ApiResponse(200, createdUser, "User Registered Successfully!")
     )
 
-
 })
-export {registerUser , login}
+export {registerUser}
