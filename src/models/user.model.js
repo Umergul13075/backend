@@ -109,7 +109,7 @@ userSchema.methods.generateAccessToken = function(){
         },
         // secretKey
         process.env.ACCESS_TOKEN_SECRET,
-        // expiry
+        // expiry/options
         {
             expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
         }
@@ -142,7 +142,7 @@ userSchema.methods.generateRefreshToken = function(){
 export const User = mongoose.model("User", userSchema)
 
 
-// jwt(javascript web token) is a bearer token
+// jwt(javascript web token) is a bearer token means you can understand it like a master key means anyone having this jwt i will send the data to him no matter what
 
 // 🔒 1. What is a Hash?
 // A hash is like a secret code made from your password.

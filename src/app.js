@@ -17,6 +17,16 @@ app.use(express.urlencoded({extended: true, limit: "16kb"}))
 app.use(express.static("public"))
 // cookieParser ka kaam yeh hai k mein mery server sey user k browser ko access kr paon aur uski ki cookies ko set krta hai basically crud operation perform krta hai
 app.use(cookieParser())
+
+// routes import
+// jb name default dete hoo tou import k time name change kr saktey haan
+import userRouter from './routes/user.routes.js'
+
+// routes decleration
+app.use("/api/v1/users", userRouter)
+// http://localhost:8000/api/v1/users/register
+
+
 export { app } 
 
 // Middleware in Express is a function that runs between the request and the response.
@@ -27,4 +37,3 @@ export { app }
 //   next(); // move to the next middleware or route
 // };
 
-//app.use(logger); // apply middleware to all routes

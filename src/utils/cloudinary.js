@@ -6,10 +6,10 @@ import fs from "fs"
         api_key: process.env.CLOUDINARY_API_KEY , 
         api_secret: process.env.CLOUDINARY_API_SECRET,
     });
-
+// same as database cloudinary can have issues while connecting so wrap in try catch and as well will take to request/upload so use async await as well
 const uploadOnCloudinary = async (localFilePath) => {
     try{
-        if(!localFilePath) return null
+        if(!localFilePath) return null;
         // upload the file on cloudinary
         const response = await cloudinary.uploader.upload(localFilePath, {
             resource_type: "auto"
@@ -18,6 +18,7 @@ const uploadOnCloudinary = async (localFilePath) => {
         console.log("file is uploaded on cloudinary", response.url);
         return response 
     }
+    // file storage (fs) sey file unlink kr do mtlb delete krdo (unlinkSync or unlink = delete)
     catch(error){
         fs.unlinkSync(localFilePath) // remove the locally saved temporary file as the upload operation got failed
         return null;
