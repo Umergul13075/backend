@@ -6,9 +6,9 @@ import {uploadOnCloudinary} from '../utils/cloudinary.js'
 import {ApiResponse} from '../utils/ApiResponse.js'
 // asyncHandler higher order function hai mtlb(function k andr eik aur function lena)
 const registerUser = asyncHandler( async (req, res) => {
-    res.status(200).json({
-        message: "Registered"
-    })
+    // res.status(200).json({
+    //     message: "Registered"
+    // })
     // step ==>1
     // get user details from frontend if you have no frontend use Postman. you get data now question arise what data will you get? The data you will get through model you have created 
 
@@ -41,8 +41,8 @@ const registerUser = asyncHandler( async (req, res) => {
     // form ya json sy data a rha hai tou woh appko req.body sey mil jaey ga
     // step // 1  
      const {fullName, username, email, password} =req.body
-     console.log("email:" ,email);
-     console.log(req.body)
+    //  console.log("email:" ,email);
+    //  console.log(req.body)
      
     //  if(fullName === ""){
     //     throw new ApiError(400, "fullname is required")
@@ -67,22 +67,31 @@ const registerUser = asyncHandler( async (req, res) => {
         throw new ApiError(400, "All fields are required")
     }
     // email validation 
-    if(!email.include("@")){
-        throw new ApiError(400, "Email must contain @ symbol")
-    }
+    // if(!email.include("@")){
+    //     throw new ApiError(400, "Email must contain @ symbol")
+    // }
     // existed User check
     const existedUser = await User.findOne({
         $or: [ {username}, {email} ]
     })
-    console.log(req.body)
+    
     if(existedUser){
         throw new ApiError(409, "Username or emial already exists")
     }
 
     // avatar, coverImage check, multer provides us req.files method as well
     const avatarLocalPath = req.files?.avatar[0]?.path
-    console.log(req.files);
-    const coverImageLocalPath = req.files?.coverImage[0]?.path
+    // console.log(req.files);
+    // const coverImageLocalPath = req.files?.coverImage[0]?.path
+
+//req.files — Did the user upload any file?
+// Array.isArray(req.files.coverImage) — Is the uploaded file in array form? (yes, because multer gives files in arrays)
+// req.files.coverImage.length > 0 — Did user actually upload something under the name coverImage?
+    let coverImageLocalPath;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0 ){
+        coverImageLocalPath = req.files.coverImage[0].path
+    } 
+    
     if(!avatarLocalPath){
         throw new ApiError (400, "Avatar file is required")
     }
@@ -91,7 +100,7 @@ const registerUser = asyncHandler( async (req, res) => {
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
-    if(avatar){
+    if(!avatar){
         throw new ApiError (400, "Avatar file is required")
     }
 
@@ -101,7 +110,7 @@ const registerUser = asyncHandler( async (req, res) => {
         avatar: avatar.url,
         // because you dont know coverImage is uploaded or not because it is not necessarily required and you dont't handle it in if case 
         coverImage: coverImage?.url || "",
-        username: username.lowerCase(),
+        username: username.toLowerCase(),
         password, 
     })
 
