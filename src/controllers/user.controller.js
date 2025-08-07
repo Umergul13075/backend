@@ -4,6 +4,30 @@ import {ApiError} from '../utils/ApiError.js';
 import {User} from '../models/user.model.js';
 import {uploadOnCloudinary} from '../utils/cloudinary.js'
 import {ApiResponse} from '../utils/ApiResponse.js'
+
+// asyncHandler ki need nahi hai because hm koi web request hi kr rhay bss hamara yeh custom method hai
+const generateAccessAndRefereshToken = async (userId) =>{
+    try{
+        const user = await User.findById(userId)
+        const accessToken = user.generateAccessToken()
+        const refreshToken =user.generateRefreshToken()
+        console.log(user)
+        // saving refresh token in database
+        user.refreshToken = refreshToken
+        await user.save({ validateBeforeSave: false })
+
+        console.log(accessToken)
+        console.log(refreshToken)
+        return {accessToken, refreshToken}
+    }
+    catch(error){
+        throw new ApiError(500, "Something went wrong while geneting access and refresh token")
+    }
+}
+
+
+
+
 // asyncHandler higher order function hai mtlb(function k andr eik aur function lena)
 const registerUser = asyncHandler( async (req, res) => {
     // res.status(200).json({
@@ -120,11 +144,105 @@ const registerUser = asyncHandler( async (req, res) => {
 
     if(!createdUser){
         throw new ApiError (500, "Something went wrong while  registreing the user")
-    }
+    }   
+
+    // await user.deleteMany({ username: null });
+
 
     return res.status(201).json(
         new ApiResponse(200, createdUser, "User Registered Successfully!")
     )
 
 })
-export {registerUser}
+
+const loginUser = asyncHandler(async (req,res) => {
+    // req body -> data
+    // email || username, password
+    // validation for user or email existance
+    // password check
+    // tokens access and refresh token
+    // send cookies
+    // response
+
+   const {username, email, password} = req.body;
+
+   if(!username || !email){
+    throw new ApiError(400,"username or email is required!")
+   }
+
+//    User.findOne({email}) if you are logging on email
+//    User.findOne({username}) if you are logging on username
+//   ya tou woh email pr mill jaey ya username py
+   const user = await User.findOne({
+    $or : [{username, email}]
+   })
+   console.log(user)
+
+   if(!user){
+    throw new ApiError(400,"User does not exist")
+   }
+//  capital User sey hamein mongodb ky methods ka access hoga aur small user sey hamein hamarey custom methods jo hm ney bnaey haan unka access hoga  
+   const isPasswordValid = await user.isPasswordCorrect(password)
+   if(!isPasswordValid){
+    throw new ApiError(401,"Invalid user credentials")
+   }
+
+   const {accessToken, refreshToken} = await generateAccessAndRefereshToken(user._id)
+
+   const loggedInUser =  User.findById(user._id)
+   .select("-password -refreshToken")
+
+   const options = {
+        httpOnly: true,
+        secure: true
+   }
+   return res.status(200)
+   .cookie("accessToken", accessToken,options)
+   .cookie("refreshToken", refreshToken, options)
+   .json(
+        new ApiResponse(
+            200,
+            {
+                user: loggedInUser, accessToken, refreshToken
+            },
+            "User Logged In Successfully"
+        )
+   )
+})
+
+
+const logoutUser = asyncHandler( async (req, res) => {
+    // for logout you need to clear User's cookies
+    // secondly you need to resert refresh token you created in the user model
+
+    // logout mein mein masla user ka tha k hamarey pass uska access nahi nahi tha tb ham ney middle ware use kr k user ka acces lia abb app isko middleware mein req.user = user bolo ya req.umer = user bolo lkn professional code mein req.user in good indutry practise
+
+    //  abb ham ney  auth.middleware.js mein jo kaam kia ha woh ham yahan iss controller wali file mein bhi kr sakty thy mgr masla yeh tha k ham ussey reuse nahi kr sakty thy isi lia hm ney seprate eik file me as a middleware lika usko aur dosra jahan tk use kr ki baat hai jaga jaga tou hamein pta krna pry ga user authenticate hai ya nahi like eg post krty hoay , like krty hoay tou agr tou user authenticate nahi  hai tou iska mtlb hai woh logout hai aur jo logout hai ussey ham post krny ksey dy sakty haan
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                refreshToken: undefined
+            }
+        },
+        {
+            new: true
+        }
+    )
+    // cookies clear code 
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+    return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {} ,"User logged out Successfully"))
+})
+
+export {
+    registerUser,
+    loginUser,
+    logoutUser 
+}

@@ -104,7 +104,7 @@ userSchema.methods.generateAccessToken = function(){
         {
             _id: this._id, // auto generated mongodb id
             email: this.email,
-            username: this.usename,
+            username: this.username,
             fullName: this.fullName
         },
         // secretKey
