@@ -7,13 +7,14 @@ import { User } from "../models/user.model.js"
 //  agr app k pass true login hoa tou mein req k andr naya object create kroon ga likelise req.user kr k 
 export const verifyJWT = asyncHandler (async (req, _, next) => {
        try{
-        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Beare ", "") 
+         // req.cookies sey access loon ga access token ka 
+        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "") 
 
        if(!token){
             throw new ApiError(401, "Unauthorized Access")
        }
        console.log(token)
-    //    you got the token now you need to verify it 
+    //    you got the token now you need to verify it and jsonwebtoken provides you the .verify method where you provide token and access token secret you wrote in .env file
        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
 
     //    in userSchema.methods.generateAccessToken you gave filed name as _id
