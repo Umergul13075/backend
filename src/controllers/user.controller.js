@@ -5,6 +5,8 @@ import {User} from '../models/user.model.js';
 import {uploadOnCloudinary} from '../utils/cloudinary.js'
 import {ApiResponse} from '../utils/ApiResponse.js'
 import jwt from 'jsonwebtoken'
+import mongoose from "mongoose";
+import { use } from "react";
 
 // asyncHandler ki need nahi hai because hm koi web request hi kr rhay bss hamara yeh custom method hai
 const generateAccessAndRefereshToken = async (userId) =>{
@@ -502,6 +504,148 @@ const updateUserCoverImage = asyncHandler(async (req, res)=>{
      )
 })
 
+// aggregation pipelines
+const getUserChannelProfile = asyncHandler(async(req, res) =>{
+    const {username} = req.params
+    if(!username?.trim()){
+        throw new ApiError(400, "username is missing")
+    }
+    // User.find({username})
+    const channel = await User.aggregate([
+        {
+            $match: {
+                username : username?.toLowerCase()
+            }
+        },
+        // for subscribers
+        // jahn appko subscribers cheeck krny hoon wahan app channel search kro gy 
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",          
+                foreignField: "channel",
+                // as wala abb field bn chuka hai
+                as: "subscribers"
+            }
+        },
+        // for channel you have subscribed too you  you will check for the same  subscriber  at multiple places
+        {
+            $lookup: {
+                 from: "subscriptions",
+                localField: "_id",          
+                foreignField: "subscriber",
+                as: "subscribedTo"
+            }
+        },
+        {
+            $addFields: {
+                // channel search kr k kia hai
+                subscribersCount: {
+                    $size : "$subscribers"
+                },
+                // user search kr k kia hai 
+                channelsSubscribedToCount: {
+                    $size: "$subscribedTo"
+                },
+                isSubscribed: {
+                    $cond: {
+                        // app k pass jo document aya hai subscribers us mein dekhna hai mein hoon ya nahi thats why subscribers kia hai
+                        if:{$in: [req.user?._id,"$subscribers.subscriber"]},
+                        then:true,
+                        else: false
+                    }
+                },
+            }
+        },
+        {
+            $project:{
+                username: 1,
+                email: 1,
+                fullName: 1,
+                avatar: 1,
+                coverImage: 1,
+                subscribersCount: 1,
+                channelsSubscribedToCount: 1,
+                isSubscribed: 1,
+
+            }
+        }
+
+    ])
+    // aggregate returns an array and in this array it returns multiple objects
+    console.log(channel)
+    if(!channel?.length){
+        throw new ApiError(404,"channel doesn't exist")
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, channel[0], "User Channel fetched successfully")
+    )
+})
+
+const getWatchHistory = asyncHandler(async(req,res)=>{
+    // req.user._id sey apko kia milta hai abb log boltey haan apko mongodb ka id milta hai arey nahi nahi apko eik string milta hai asey 
+    //_id: objectId('689519fa110797522ad947c0')
+    // abb app mongoose use kr rhay haan tou internally isko ja kr mongodb mein id mein convert krta hai but basically question kia hai kay req.user._id sey kia milta hai tou bss answer hai eik string milta hai that's it . 
+    // req.user._id
+
+    const user  = await User.aggregate([
+        // aggregation pipelines ka code directly jata hai database mein yahan _id: req.user._id krty tou msla hota because yahan mongoose work nahi krta. tou apko ko na mongoose ki objectId bnani prti hai 
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField:"watchHistory",
+                foreignField:"_id",
+                as:"watchHistory",
+                pipeline: [
+                    {
+                        $lookup:{
+                            from:"users",
+                            localField:"owner",
+                            foreignField:"_id",
+                            as:"owner",
+                            pipeline:[
+                                {
+                                    $project:{
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1,
+
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields:{
+                            owner:{
+                                $first:"$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            user[0].watchHistory,
+            "Watch history fetched successfully"
+
+        )
+    )
+})
 
 export {
     registerUser,
@@ -512,5 +656,7 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-    updateUserCoverImage
+    updateUserCoverImage,
+    getUserChannelProfile,
+    getWatchHistory
 }
