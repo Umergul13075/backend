@@ -13,14 +13,14 @@ export const verifyJWT = asyncHandler (async (req, _, next) => {
        if(!token){
             throw new ApiError(401, "Unauthorized Access")
        }
-       console.log(token)
+      //  console.log(token)
     //    you got the token now you need to verify it and jsonwebtoken provides you the .verify method where you provide token and access token secret you wrote in .env file
        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
 
     //    in userSchema.methods.generateAccessToken you gave filed name as _id
        const user = await User.findById(decodedToken?._id).select("-password -refreshToken")
 
-       console.log(user)
+      //  console.log(user)
        if(!user){
         // discussion about frontend
         throw new ApiError(401, "Invalid Access Token")
