@@ -21,14 +21,16 @@ app.use(cookieParser())
 // routes import
 // jb name default dete hoo tou import k time name change kr saktey haan
 import userRouter from './routes/user.routes.js'
-import loginRouter from './routes/user.routes.js'
+import tweet from "./routes/tweet.routes.js";
 
 // routes decleration
 app.use("/api/v1/users", userRouter)
 // http://localhost:8000/api/v1/users/register
 
-app.use("/api/v2/users", loginRouter)
+// app.use("/api/v2/users", loginRouter)
 // http://localhost:8000/api/v2/users/login
+
+app.use("/api/v1/tweet", tweet)
 
 
 export { app } 
