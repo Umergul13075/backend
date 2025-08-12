@@ -33,9 +33,6 @@ const generateAccessAndRefereshToken = async (userId) =>{
 
 // asyncHandler higher order function hai mtlb(function k andr eik aur function lena)
 const registerUser = asyncHandler( async (req, res) => {
-    // res.status(200).json({
-    //     message: "Registered"
-    // })
     // step ==>1
     // get user details from frontend if you have no frontend use Postman. you get data now question arise what data will you get? The data you will get through model you have created 
 
